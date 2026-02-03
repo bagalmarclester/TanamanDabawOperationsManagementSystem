@@ -121,7 +121,7 @@
 @section('content')
 <div class="page-header">
     <div>
-        <a href="employee.html" style="text-decoration:none; color: #64748b; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; margin-bottom: 10px;">
+        <a href="{{ route('employees') }}" style="text-decoration:none; color: #64748b; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; margin-bottom: 10px;">
             <i class="fas fa-arrow-left"></i> Back to Employees
         </a>
         <div style="display: flex; align-items: center; gap: 10px;">

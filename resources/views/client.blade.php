@@ -100,7 +100,7 @@
             </tr>
             @empty
             <tr>
-                <td colspan="5" style="text-align:center; padding:40px; color:#64748b;">
+                <td colspan="5" style="text-align:center; padding:40px; color:#64748b; ">
                     No clients found.
                 </td>
             </tr>

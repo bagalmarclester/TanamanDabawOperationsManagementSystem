@@ -34,7 +34,7 @@ class AuthController extends Controller
             $request->session()->regenerate();
             return response()->json(['message' => 'Login successful'], 200);
         } else {
-            return response()->json(['message' => 'Invalid credentials'], 401)->onlyInput('login');
+            return response()->json(['message' => 'Invalid credentials'], 401);
         }
     }
 

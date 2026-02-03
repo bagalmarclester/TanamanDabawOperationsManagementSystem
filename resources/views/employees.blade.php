@@ -50,9 +50,7 @@
         color: white;
     }
 
-    .edit-btn {
-        background-color: #3b82f6;
-    }
+
 
     .delete-btn {
         background-color: #ef4444;
@@ -104,7 +102,7 @@
                         </span>
                     </td> -->
                 <td>
-                    <button class="btn-action edit-btn"
+                    <button class="btn-primary edit-btn"
                         data-id="{{ $emp->id }}"
                         data-name="{{ $emp->name }}"
                         data-email="{{ $emp->email }}">
@@ -161,178 +159,188 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Variables
-        const modal = document.getElementById('employeeModal');
-        const modalTitle = document.getElementById('modalTitle');
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                // Variables
+                const modal = document.getElementById('employeeModal');
+                const modalTitle = document.getElementById('modalTitle');
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-        const nameInput = document.getElementById('name');
-        const emailInput = document.getElementById('email');
-        const idInput = document.getElementById('emp_id');
+                const nameInput = document.getElementById('name');
+                const emailInput = document.getElementById('email');
+                const idInput = document.getElementById('emp_id');
 
-        // Reset Password Elements
-        const resetPassContainer = document.getElementById('resetPasswordContainer');
-        const resetPassInput = document.getElementById('reset_password');
+                // Reset Password Elements
+                const resetPassContainer = document.getElementById('resetPasswordContainer');
+                const resetPassInput = document.getElementById('reset_password');
 
-        const rows = document.querySelectorAll('tr[data-href]');
+                // const rows = document.querySelectorAll('tr[data-href]');
 
-        rows.forEach(row => {
-            row.addEventListener('click', () => {
-                window.location.href = row.dataset.href; // <--- This redirects the page
-            });
-        });
+                // rows.forEach(row => {
+                //     row.addEventListener('click', () => {
+                //         window.location.href = row.dataset.href; // <--- This redirects the page
+                //     });
+                // });
 
-        // Search Logic
-        const searchInput = document.getElementById('searchInput');
-        const tableBody = document.getElementById('employeeTableBody');
+                // Search Logic
+                const searchInput = document.getElementById('searchInput');
+                const tableBody = document.getElementById('employeeTableBody');
 
-        if (searchInput) {
-            searchInput.addEventListener('keyup', function() {
-                const filter = searchInput.value.toLowerCase();
-                const rows = tableBody.getElementsByTagName('tr');
-                for (let i = 0; i < rows.length; i++) {
-                    let textContent = rows[i].innerText.toLowerCase();
-                    rows[i].style.display = textContent.includes(filter) ? "" : "none";
+                if (searchInput) {
+                    searchInput.addEventListener('keyup', function() {
+                        const filter = searchInput.value.toLowerCase();
+                        const rows = tableBody.getElementsByTagName('tr');
+                        for (let i = 0; i < rows.length; i++) {
+                            let textContent = rows[i].innerText.toLowerCase();
+                            rows[i].style.display = textContent.includes(filter) ? "" : "none";
+                        }
+                    });
                 }
-            });
-        }
 
-        // Modal Logic
-        const openModal = () => {
-            modal.style.display = 'flex';
-        };
-        const closeModal = () => {
-            modal.style.display = 'none';
-        };
 
-        // ADD BUTTON CLICK
-        document.getElementById('addEmployeeBtn').addEventListener('click', () => {
-            idInput.value = '';
-            nameInput.value = '';
-            emailInput.value = '';
+                
 
-            // Hide reset password option (new users get default pass anyway)
-            resetPassContainer.style.display = 'none';
-            resetPassInput.checked = false;
+                    // Modal Logic
+                    const openModal = () => {
+                        modal.style.display = 'flex';
+                    };
+                    const closeModal = () => {
+                        modal.style.display = 'none';
+                    };
 
-            modalTitle.innerText = "Add New Employee";
-            openModal();
-        });
+                    // ADD BUTTON CLICK
+                    document.getElementById('addEmployeeBtn').addEventListener('click', () => {
+                        idInput.value = '';
+                        nameInput.value = '';
+                        emailInput.value = '';
 
-        document.querySelector('.close-modal-btn').addEventListener('click', closeModal);
-        document.querySelector('.btn-cancel').addEventListener('click', closeModal);
+                        // Hide reset password option (new users get default pass anyway)
+                        resetPassContainer.style.display = 'none';
+                        resetPassInput.checked = false;
 
-        // TABLE ACTIONS
-        tableBody.addEventListener('click', (e) => {
-            const editBtn = e.target.closest('.edit-btn');
-            const deleteBtn = e.target.closest('.delete-btn');
+                        modalTitle.innerText = "Add New Employee";
+                        openModal();
+                    });
 
-            // EDIT CLICK
-            if (editBtn) {
-                idInput.value = editBtn.dataset.id;
-                nameInput.value = editBtn.dataset.name;
-                emailInput.value = editBtn.dataset.email;
+                    document.querySelector('.close-modal-btn').addEventListener('click', closeModal);
+                    document.querySelector('.btn-cancel').addEventListener('click', closeModal);
 
-                // Show reset password option
-                resetPassContainer.style.display = 'block';
-                resetPassInput.checked = false; // Always unchecked when opening
+                    // TABLE ACTIONS
+                    tableBody.addEventListener('click', (e) => {
+                        const editBtn = e.target.closest('.edit-btn');
+                        const deleteBtn = e.target.closest('.delete-btn');
 
-                modalTitle.innerText = "Edit Employee";
-                openModal();
-            }
+                        // EDIT CLICK
+                        if (editBtn) {
+                            idInput.value = editBtn.dataset.id;
+                            nameInput.value = editBtn.dataset.name;
+                            emailInput.value = editBtn.dataset.email;
 
-            // DELETE CLICK
-            if (deleteBtn) {
-                const id = deleteBtn.dataset.id;
-                Swal.fire({
-                    title: 'Remove Employee?',
-                    text: "They will no longer be able to log in.",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    confirmButtonText: 'Yes, remove'
-                }).then(async (result) => {
-                    if (result.isConfirmed) {
-                        try {
-                            const response = await fetch(`/employees/${id}`, {
-                                method: 'DELETE',
-                                headers: {
-                                    'X-CSRF-TOKEN': csrfToken
+                            // Show reset password option
+                            resetPassContainer.style.display = 'block';
+                            resetPassInput.checked = false; // Always unchecked when opening
+
+                            modalTitle.innerText = "Edit Employee";
+                            openModal();
+                        }
+
+                        // DELETE CLICK
+                        else if (deleteBtn) {
+                            const id = deleteBtn.dataset.id;
+                            Swal.fire({
+                                title: 'Remove Employee?',
+                                text: "They will no longer be able to log in.",
+                                icon: 'warning',
+                                showCancelButton: true,
+                                confirmButtonColor: '#d33',
+                                confirmButtonText: 'Yes, remove'
+                            }).then(async (result) => {
+                                if (result.isConfirmed) {
+                                    try {
+                                        const response = await fetch(`/employees/${id}`, {
+                                            method: 'DELETE',
+                                            headers: {
+                                                'X-CSRF-TOKEN': csrfToken
+                                            }
+                                        });
+
+                                        if (response.ok) {
+                                            Swal.fire({
+                                                    title: 'Deleted!',
+                                                    text: result.message,
+                                                    icon: 'success',
+                                                    timer: 1500,
+                                                    showConfirmButton: false
+                                                })
+                                                .then(() => window.location.reload());
+                                        } else {
+                                            Swal.fire('Error', 'Could not delete.', 'error');
+                                        }
+                                    } catch (error) {
+                                        console.error(error);
+                                    }
                                 }
                             });
+                        }
+
+                        else {
+                        const row = e.target.closest('tr[data-href]');
+                        if (row) {
+                            window.location.href = row.dataset.href;
+                        }
+                    }
+                    });
+
+                    // SAVE BUTTON CLICK
+                    document.querySelector('.btn-save').addEventListener('click', async (e) => {
+                        e.preventDefault();
+
+                        const id = idInput.value;
+
+                        const data = {
+                            name: nameInput.value,
+                            position: 'Employee', // Default role
+                            email: emailInput.value,
+                            // Send the reset flag
+                            reset_password: resetPassInput.checked
+                        };
+
+                        let url = "{{ route('employees.store') }}";
+                        let method = "POST";
+
+                        if (id) {
+                            url = `/employees/${id}`;
+                            method = "PUT";
+                        }
+
+                        try {
+                            const response = await fetch(url, {
+                                method: method,
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken
+                                },
+                                body: JSON.stringify(data)
+                            });
+
+                            const result = await response.json();
 
                             if (response.ok) {
+                                closeModal();
                                 Swal.fire({
-                                        title: 'Deleted!',
-                                        text: result.message,
-                                        icon: 'success',
-                                        timer: 1500,
-                                        showConfirmButton: false
-                                    })
-                                    .then(() => window.location.reload());
+                                    title: 'Success',
+                                    text: result.message,
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                }).then(() => window.location.reload());
                             } else {
-                                Swal.fire('Error', 'Could not delete.', 'error');
+                                Swal.fire('Error', result.message || 'Validation failed', 'error');
                             }
                         } catch (error) {
                             console.error(error);
+                            Swal.fire('Error', 'System error occurred', 'error');
                         }
-                    }
+                    });
                 });
-            }
-        });
-
-        // SAVE BUTTON CLICK
-        document.querySelector('.btn-save').addEventListener('click', async (e) => {
-            e.preventDefault();
-
-            const id = idInput.value;
-
-            const data = {
-                name: nameInput.value,
-                position: 'Employee', // Default role
-                email: emailInput.value,
-                // Send the reset flag
-                reset_password: resetPassInput.checked
-            };
-
-            let url = "{{ route('employees.store') }}";
-            let method = "POST";
-
-            if (id) {
-                url = `/employees/${id}`;
-                method = "PUT";
-            }
-
-            try {
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    closeModal();
-                    Swal.fire({
-                        title: 'Success',
-                        text: result.message,
-                        icon: 'success',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => window.location.reload());
-                } else {
-                    Swal.fire('Error', result.message || 'Validation failed', 'error');
-                }
-            } catch (error) {
-                console.error(error);
-                Swal.fire('Error', 'System error occurred', 'error');
-            }
-        });
-    });
 </script>
 @endpush

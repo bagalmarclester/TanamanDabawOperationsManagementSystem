@@ -89,7 +89,7 @@
                 if (response.ok) {
                     Swal.fire({
                         title: 'Welcome Back!',
-                        text: 'Login successful. Redirecting...',
+                        text: `${result.message}`,
                         icon: 'success',
                         iconColor: '#319B72',       
                         confirmButtonColor: '#1A4D3F', 

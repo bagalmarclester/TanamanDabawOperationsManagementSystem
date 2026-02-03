@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\SetupController;
 use App\Models\User;
@@ -15,11 +16,10 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['not.installed'])->group(function () {
     Route::get('/setup', [SetupController::class, 'index'])->name('setup');
     Route::post('/setup', [SetupController::class, 'store'])->name('setup.store');
-  
 });
 
 Route::middleware(['guest', 'ensure.setup'])->group(function () {
-      Route::get('/', function () {
+    Route::get('/', function () {
         return redirect('/login');
     });
 
@@ -84,6 +84,16 @@ Route::middleware(['auth', 'restrict.user'])->group(function () {
 
 
 Route::middleware(['auth', 'restrict.user'])->group(function () {
+    Route::get('/inventory', [InventoryController::class, 'index'])->name('inventory');
+    Route::post('/inventory', [InventoryController::class, 'store']); // Add Item
+    Route::put('/inventory/{id}', [InventoryController::class, 'update']); // Edit Item
+    Route::delete('/inventory/{id}', [InventoryController::class, 'destroy']); // Delete Item
+    Route::post('/inventory/{id}/stock-in', [InventoryController::class, 'stockIn']);
+    Route::post('/inventory/{id}/stock-out', [InventoryController::class, 'stockOut']);
+});
+
+
+Route::middleware(['auth', 'restrict.user'])->group(function () {
 
     // Quotes
     Route::get('/quotes', function () {
@@ -94,11 +104,6 @@ Route::middleware(['auth', 'restrict.user'])->group(function () {
     Route::get('/invoices', function () {
         return view('invoice');
     })->name('invoices');
-
-    // Inventory
-    Route::get('/inventory', function () {
-        return view('inventory');
-    })->name('inventory');
 
     // Profile (Referenced in your Navbar dropdown)
     Route::get('/profile', function () {
