@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('quote_id')->nullable()->constrained('quotes')->nullOnDelete();
             $table->string('project_name');
             $table->decimal('project_budget', 15, 2);
             $table->boolean('is_active')->default(true);

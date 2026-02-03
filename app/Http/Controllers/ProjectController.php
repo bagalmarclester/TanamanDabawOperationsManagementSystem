@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Client;
 use App\Models\Project;
 use App\Models\ProjectImage;
+use App\Models\Quote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use function Symfony\Component\Clock\now;
@@ -28,27 +29,35 @@ class ProjectController extends Controller
             });
         }
         $projects = $query->paginate(20)->withQueryString();
+        $pendingQuotes = Quote::where('status', 'pending')->get();
         $clients = Client::all();
-        return view('project', compact('projects', 'clients'));
+        return view('project', compact('projects', 'clients', 'pendingQuotes'));
     }
 
     public function create(Request $request)
     {
-
         $validated = $request->validate([
             'project_name' => 'required|string|max:255',
             'project_budget' => 'required|numeric|min:0',
             'project_end_date' => 'required|date|after:today',
             'client_id' => 'required|exists:clients,id',
+            'quote_id' => 'nullable|exists:quotes,id', // <--- NEW
         ]);
-        Project::create([
+
+        $project = Project::create([
             'project_name' => $validated['project_name'],
             'project_budget' => $validated['project_budget'],
             'is_active' => true,
             'project_start_date' => now(),
             'project_end_date' => $validated['project_end_date'],
             'client_id' => $validated['client_id'],
+            'quote_id' => $validated['quote_id'] ?? null, // <--- NEW
         ]);
+
+        if (!empty($validated['quote_id'])) {
+            Quote::where('id', $validated['quote_id'])
+                ->update(['status' => 'accepted']);
+        }
 
         return response()->json([
             'message' => 'Project created successfully',
@@ -60,8 +69,19 @@ class ProjectController extends Controller
     public function update(Request $request, string $id)
     {
         $project = Project::find($id);
+
         if ($project) {
+            if ($request->has('quote_id')) {
+                $request->validate(['quote_id' => 'nullable|exists:quotes,id']);
+            }
+
             $project->update($request->all());
+
+            if ($request->has('quote_id') && $request->quote_id) {
+                Quote::where('id', $request->quote_id)
+                    ->update(['status' => 'accepted']);
+            }
+
             return response()->json([
                 'message' => 'Project updated successfully',
                 'redirect' => route('projects')
