@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InventoryController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\SetupController;
 use App\Models\User;
 use GuzzleHttp\Middleware;
@@ -92,13 +93,14 @@ Route::middleware(['auth', 'restrict.user'])->group(function () {
     Route::post('/inventory/{id}/stock-out', [InventoryController::class, 'stockOut']);
 });
 
+Route::middleware(['auth'])->group(function () {
+    Route::get('/quotes', [QuoteController::class, 'index'])->name('quotes');
+    Route::post('/quotes', [QuoteController::class, 'store'])->name('quotes.store');
+    Route::put('/quotes/{id}', [QuoteController::class, 'update'])->name('quotes.update'); // For Edit
+    Route::delete('/quotes/{id}', [QuoteController::class, 'destroy'])->name('quotes.destroy');
+});
 
 Route::middleware(['auth', 'restrict.user'])->group(function () {
-
-    // Quotes
-    Route::get('/quotes', function () {
-        return view('quotes');
-    })->name('quotes');
 
     // Invoices
     Route::get('/invoices', function () {
