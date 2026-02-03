@@ -72,7 +72,7 @@
     <div class="stat-card">
         <div class="stat-text">
             <h3>Inventory Items</h3>
-            <p class="number">0</p>
+            <p class="number">{{ $totalInventoryItems }}</p>
             <a href="inventory.html" class="details-link">View details</a>
         </div>
         <div class="stat-icon icon-bg-red">

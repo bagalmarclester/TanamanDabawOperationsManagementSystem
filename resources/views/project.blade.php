@@ -49,7 +49,7 @@
         
         <div style="display: flex; gap: 10px; align-items: center;">
             <form action="{{ route('projects') }}" method="GET" style="position: relative; margin: 0;">
-                <input type="text" name="search" value="{{ request('search') }}" placeholder="Search projects..." style="padding: 10px 10px 10px 35px; border: 1px solid #ddd; border-radius: 6px; outline: none; width: 250px;">
+                <input type="text" name="search" id="searchInput" value="{{ request('search') }}" placeholder="Search projects..." style="padding: 10px 10px 10px 35px; border: 1px solid #ddd; border-radius: 6px; outline: none; width: 250px;">
                 <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b;"></i>
             </form>
 
@@ -72,7 +72,7 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="projectsTableBody">
                 @forelse($projects as $project)
                 <tr data-href="{{ route('projects.panel', $project->id) }}">
                     <td>{{ $project->project_name }}</td>
@@ -283,7 +283,28 @@
                 }
             });
         }
+        // Search logic
+        const searchInput = document.getElementById('searchInput');
+        
+        const tableBody = document.getElementById('projectsTableBody'); 
 
+        if (searchInput && tableBody) {
+            searchInput.addEventListener('keyup', function() {
+                const filter = searchInput.value.toLowerCase();
+                const rows = tableBody.getElementsByTagName('tr');
+
+                for (let i = 0; i < rows.length; i++) {
+                    let textContent = rows[i].innerText.toLowerCase();
+                    
+                    // Toggle visibility based on search match
+                    if (textContent.includes(filter)) {
+                        rows[i].style.display = "";
+                    } else {
+                        rows[i].style.display = "none";
+                    }
+                }
+            });
+        }
         // Save Project Logic
         if (saveBtn) {
             saveBtn.addEventListener('click', async (e) => {

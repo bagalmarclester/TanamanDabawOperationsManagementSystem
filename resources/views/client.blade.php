@@ -49,6 +49,7 @@
         <form action="{{ route('clients') }}" method="GET" style="position: relative; margin: 0;">
             <input type="text"
                 name="search"
+                id="searchInput"
                 value="{{ request('search') }}"
                 placeholder="Search clients..."
                 style="padding: 10px 10px 10px 35px; border: 1px solid #ddd; border-radius: 6px; outline: none; width: 250px;">
@@ -73,7 +74,7 @@
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="clientTableBody">
             @forelse ($clients as $client)
             <tr data-href="{{ route('clients.panel', $client->id) }}">
                 <td>{{ $client->name }}</td>
@@ -202,6 +203,29 @@
     const emailField = document.getElementById('email');
     const phoneField = document.getElementById('phone');
     const addressField = document.getElementById('address');
+
+    // search logic
+    const searchInput = document.getElementById('searchInput');
+
+    const tableBody = document.getElementById('clientTableBody');
+
+    if (searchInput && tableBody) {
+        searchInput.addEventListener('keyup', function() {
+            const filter = searchInput.value.toLowerCase();
+            const rows = tableBody.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                let textContent = rows[i].innerText.toLowerCase();
+
+                // Toggle visibility based on search match
+                if (textContent.includes(filter)) {
+                    rows[i].style.display = "";
+                } else {
+                    rows[i].style.display = "none";
+                }
+            }
+        });
+    }
 
     if (addBtn) {
         addBtn.addEventListener('click', () => {
