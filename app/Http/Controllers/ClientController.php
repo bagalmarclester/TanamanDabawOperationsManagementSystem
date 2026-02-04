@@ -26,7 +26,18 @@ class ClientController extends Controller
 
     public function create(Request $request)
     {
-        Client::create($request->all());
+        $validated = $request->validate([
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:users,email',
+            'phone' => 'required|string|regex:/^09\d{9}$/',
+            'address' => 'required|string|max:100',
+        ]);
+        Client::create([
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
+            'phone' => $validated['phone'],
+            'address' => $validated['address'],
+        ]);
         return response()->json([
             'message' => 'Client created successfully',
             'redirect' => route('clients')

@@ -114,7 +114,6 @@
     </div>
 </div>
 
-{{-- MODAL (UNCHANGED) --}}
 <div class="modal-overlay" id="clientModal">
     <div class="modal-box">
         <div class="modal-header">
@@ -137,12 +136,12 @@
 
             <div class="input-group">
                 <label>Phone Number</label>
-                <input id="phone" type="tel">
+                <input id="phone" placeholder="+639xxxxxxxxx" type="tel" pattern="(?:\+63|0)9\d{2}-\d{3}-\d{4}|(?:\+63|0)2\d{1}-\d{3}-\d{4}" required>
             </div>
 
             <div class="input-group">
                 <label>Address</label>
-                <input id="address" type="text">
+                <input id="address" type="text" required>
             </div>
 
             <div class="modal-actions">
@@ -233,6 +232,7 @@
             nameField.value = '';
             emailField.value = '';
             phoneField.value = '';
+            phoneField.placeholder='+639xx000xxxx';
             addressField.value = '';
 
             modalTitle.innerText = "Add New Client";
