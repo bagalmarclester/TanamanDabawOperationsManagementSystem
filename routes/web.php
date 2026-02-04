@@ -5,6 +5,7 @@ use App\Http\Controllers\ClientController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\InventoryController;
+use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\SetupController;
@@ -100,12 +101,15 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/quotes/{id}', [QuoteController::class, 'destroy'])->name('quotes.destroy');
 });
 
-Route::middleware(['auth', 'restrict.user'])->group(function () {
+Route::middleware(['auth'])->group(function () {
+    Route::get('/invoices', [InvoiceController::class, 'index'])->name('invoices');
+    Route::post('/invoices', [InvoiceController::class, 'store'])->name('invoices.store');
+    Route::put('/invoices/{id}/pay', [App\Http\Controllers\InvoiceController::class, 'markAsPaid'])->name('invoices.pay');
+    Route::post('/invoices/{id}/send', [App\Http\Controllers\InvoiceController::class, 'sendEmail'])->name('invoices.send');
+    Route::get('/projects/{id}/invoice-data', [ProjectController::class, 'getInvoiceData']);
+});
 
-    // Invoices
-    Route::get('/invoices', function () {
-        return view('invoice');
-    })->name('invoices');
+Route::middleware(['auth', 'restrict.user'])->group(function () {
 
     // Profile (Referenced in your Navbar dropdown)
     Route::get('/profile', function () {

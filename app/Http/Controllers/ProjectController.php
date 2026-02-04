@@ -169,4 +169,34 @@ class ProjectController extends Controller
         return redirect()->route('projects.panel', ['id' => $id])
             ->with('success', 'Photos uploaded successfully!');
     }
+
+    public function getInvoiceData($id)
+    {
+
+        $project = \App\Models\Project::with(['client', 'quote.items'])->findOrFail($id);
+
+        $items = [];
+
+        if ($project->quote) {
+            foreach ($project->quote->items as $item) {
+                $items[] = [
+                    'description' => $item->description,
+                    'quantity'    => $item->quantity,
+                    'price'       => $item->price,
+                ];
+            }
+        } else {
+            $items[] = [
+                'description' => 'Project Service: ' . $project->project_name,
+                'quantity'    => 1,
+                'price'       => $project->project_budget,
+            ];
+        }
+
+        return response()->json([
+            'client_id'   => $project->client_id,
+            'client_name' => $project->client->name,
+            'items'       => $items
+        ]);
+    }
 }
