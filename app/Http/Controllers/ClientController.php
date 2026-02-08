@@ -39,16 +39,22 @@ class ClientController extends Controller
                 'phone.regex' => 'Please enter a valid PH number, e.g., 09123456789'
             ]
         );
-        Client::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'phone' => $validated['phone'],
-            'address' => $validated['address'],
-        ]);
-        return response()->json([
-            'message' => 'Client created successfully',
-            'redirect' => route('clients')
-        ], 200);
+        try {
+            Client::create([
+                'name'     => $validated['name'],
+                'email'    => $validated['email'],
+                'phone' => $validated['phone'],
+                'address' => $validated['address'],
+            ]);
+            return response()->json([
+                'message' => 'Client created successfully',
+                'redirect' => route('clients')
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function update(Request $request, string $id)
@@ -65,43 +71,55 @@ class ClientController extends Controller
                 'phone.regex' => 'Please enter a valid PH number, e.g., 09123456789'
             ]
         );
-        $client = Client::find($id);
+        try {
+            $client = Client::find($id);
 
-        if (! $client) {
-            return response()->json([
-                'message' => 'Client not found'
-            ], 404);
-        }
+            if (! $client) {
+                return response()->json([
+                    'message' => 'Client not found'
+                ], 404);
+            }
 
-        // Fill but donot  save
-        $client->fill($validated);
-        // Check if anything is changed in the data
-        if (! $client->isDirty()) {
+            // Fill but donot  save
+            $client->fill($validated);
+            // Check if anything is changed in the data
+            if (! $client->isDirty()) {
+                return response()->json([
+                    'message' => 'No changes were made'
+                ], 200);
+            }
+
+            $client->save();
             return response()->json([
-                'message' => 'No changes were made'
+                'message' => 'Client updated successfully'
             ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+            ], 500);
         }
-
-        $client->save();
-        return response()->json([
-            'message' => 'Client updated successfully'
-        ], 200);
     }
 
     public function destroy(string $id)
     {
-        $client = Client::find($id);
-        if ($client) {
-            $client->delete();
+        try {
+            $client = Client::find($id);
+            if ($client) {
+                $client->delete();
 
+                return response()->json([
+                    'message' => 'Client deleted successfully',
+                    'redirect' => route('projects')
+                ], 200);
+            } else {
+                return response()->json([
+                    'message' => 'Client not found'
+                ], 404);
+            }
+        } catch (\Exception $e) {
             return response()->json([
-                'message' => 'Client deleted successfully',
-                'redirect' => route('projects')
-            ], 200);
-        } else {
-            return response()->json([
-                'message' => 'Client not found'
-            ], 404);
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+            ], 500);
         }
     }
 

@@ -402,7 +402,7 @@
                         createItemRow(item.description, item.quantity, item.price);
                     });
                 } else {
-                    // Show one empty row if none exist, but disabled
+                    // Show one empty row if none exist
                     createItemRow();
                 }
 

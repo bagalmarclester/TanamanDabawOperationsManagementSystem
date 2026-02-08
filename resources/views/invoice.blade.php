@@ -494,9 +494,7 @@
             totalDisplay.innerText = '₱' + total.toLocaleString('en-US', { minimumFractionDigits: 2 });
         }
 
-        // --- DELEGATED EVENTS ---
-
-        // Edit Mode Modification
+        // Edit Mode
         document.addEventListener('click', function(e) {
             if(e.target.closest('.edit-btn')) {
                 resetModalState();
@@ -586,7 +584,7 @@
             }
         });
 
-        // Send Email (HANDLES RESEND AS WELL)
+        // Send Email
         document.addEventListener('click', function(e) {
             if(e.target.closest('.send-email-btn')) {
                 const btn = e.target.closest('.send-email-btn');
@@ -625,7 +623,7 @@
             }
         });
 
-        // Delete (STANDARD DELETE, NO SECURITY CHECK AS REQUESTED)
+        // Delete
         document.addEventListener('click', function(e) {
             if(e.target.closest('.delete-btn')) {
                 const btn = e.target.closest('.delete-btn');

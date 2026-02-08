@@ -76,7 +76,9 @@ class QuoteController extends Controller
                 'message' => 'Quote created successfully',
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -134,17 +136,25 @@ class QuoteController extends Controller
                 'message' => 'Quote updated successfully',
             ]);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Error: ' . $e->getMessage()], 500);
+            return response()->json([
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+            ], 500);
         }
     }
 
     public function destroy($id)
     {
+        try {
         $quote = Quote::find($id);
         if ($quote) {
             $quote->delete();
             return response()->json(['message' => 'Quote moved to trash']);
         }
         return response()->json(['message' => 'Quote not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

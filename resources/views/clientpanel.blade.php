@@ -125,29 +125,25 @@
 
 @push('scripts')
     <script>
-        // --- 1. Pass Data from Blade to JS ---
         const clientId = <?php echo $client->id; ?>;
 
-        // --- 2. Edit Profile Logic ---
+        // Edit Profile Logic ---
         const modal = document.getElementById('editProfileModal');
         const openBtn = document.getElementById('openEditBtn');
         const closeBtn = document.getElementById('closeEditBtn');
         const cancelBtn = document.getElementById('cancelEditBtn');
         const form = document.getElementById('editProfileForm');
         
-        // Display Elements
         const displayName = document.getElementById('displayName');
         const displayEmail = document.getElementById('displayEmail');
         const displayPhone = document.getElementById('displayPhone');
         const displayAddress = document.getElementById('displayAddress');
         
-        // Input Elements
         const inputName = document.getElementById('inputName');
         const inputEmail = document.getElementById('inputEmail');
         const inputPhone = document.getElementById('inputPhone');
         const inputAddress = document.getElementById('inputAddress');
 
-        // Open Modal & Pre-fill Data
         if(openBtn) {
             openBtn.addEventListener('click', () => {
                 inputName.value = displayName.innerText;
@@ -164,7 +160,7 @@
         if(cancelBtn) cancelBtn.addEventListener('click', closeModal);
         window.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-        // Submit Logic (AJAX)
+        // Submit Logic
         if(form) {
             form.addEventListener('submit', async (e) => {
                 e.preventDefault(); 

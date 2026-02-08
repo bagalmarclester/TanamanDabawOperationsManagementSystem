@@ -114,7 +114,7 @@
             <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b;"></i>
         </div>
 
-        {{-- SECURITY UPDATE: Only Admin can HIRE (Add) employees --}}
+        {{-- Only Admin can ADD employees --}}
         @if(auth()->user()->role === 'Admin')
             <button class="btn-primary" id="addEmployeeBtn">
                 <i class="fas fa-plus"></i> Add Employee
@@ -211,7 +211,7 @@
                 <select id="role" required>
                     <option value="" disabled selected>Select a Role</option>
                     
-                    {{-- SECURITY UPDATE: Only Admin can see/assign the Operations Manager role --}}
+                    {{-- Only Admin can see/assign the Operations Manager role --}}
                     @if(auth()->user()->role === 'Admin')
                         <option value="Operations Manager">Operations Manager</option>
                     @endif
@@ -275,7 +275,6 @@
         const searchInput = document.getElementById('searchInput');
         const tableBody = document.getElementById('employeeTableBody');
         
-        // Button might not exist if user is Ops Manager
         const addEmployeeBtn = document.getElementById('addEmployeeBtn');
 
         if (searchInput) {
@@ -396,7 +395,7 @@
             }
         });
 
-        // --- SAVE BUTTON ---
+        // SAVE BUTTON
         document.querySelector('.btn-save').addEventListener('click', async (e) => {
             e.preventDefault();
 
@@ -415,7 +414,6 @@
             let method = "POST";
 
             if (id) {
-                // Using template literal with backticks for JS
                 url = `/employees/${id}`;
                 method = "PUT";
             }

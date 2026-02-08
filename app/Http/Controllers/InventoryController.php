@@ -25,48 +25,56 @@ class InventoryController extends Controller
 
     public function store(Request $request)
     {
-        // Validate inputs matching the Modal Form
-        $validated = $request->validate( [
-            'name'        => 'required|string|unique:inventory,item_name|max:255',
-            'sku'         => 'required|string|unique:inventory,sku',
-            'category_id' => 'required|exists:inventory_categories,id',
-            'price'       => 'required|numeric|min:0',
-            'stock'       => 'required|integer|min:0',
-        ], [
-            'name.unique' => 'This item name is already in use.',
-            'sku.unique' => 'This SKU is already in use.',
-            'stock.min'  => 'Stock must be at least 0.',
-            'price.min'  => 'Price must be at least 0.',
-        ]);
+        try {
 
-        // Create the item
-        $item = Inventory::create([
-            'item_name'    => $validated['name'],
-            'sku'          => $validated['sku'],
-            'category_id'  => $validated['category_id'],
-            'price'        => $validated['price'],
-            'stock_level'  => $validated['stock'],
-        ]);
 
-        // Log the transaction
-        if ($item->stock_level > 0) {
-            InventoryTransaction::create([
-                'inventory_item_id' => $item->id,
-                'type'              => 'IN',
-                'quantity'          => $item->stock_level,
-                'reason'            => 'Initial Stock (Item Created)',
+            // Validate inputs matching the Modal Form
+            $validated = $request->validate([
+                'name'        => 'required|string|unique:inventory,item_name|max:255',
+                'sku'         => 'required|string|unique:inventory,sku',
+                'category_id' => 'required|exists:inventory_categories,id',
+                'price'       => 'required|numeric|min:0',
+                'stock'       => 'required|integer|min:0',
+            ], [
+                'name.unique' => 'This item name is already in use.',
+                'sku.unique' => 'This SKU is already in use.',
+                'stock.min'  => 'Stock must be at least 0.',
+                'price.min'  => 'Price must be at least 0.',
             ]);
+
+            // Create the item
+            $item = Inventory::create([
+                'item_name'    => $validated['name'],
+                'sku'          => $validated['sku'],
+                'category_id'  => $validated['category_id'],
+                'price'        => $validated['price'],
+                'stock_level'  => $validated['stock'],
+            ]);
+
+            // Log the transaction
+            if ($item->stock_level > 0) {
+                InventoryTransaction::create([
+                    'inventory_item_id' => $item->id,
+                    'type'              => 'IN',
+                    'quantity'          => $item->stock_level,
+                    'reason'            => 'Initial Stock (Item Created)',
+                ]);
+            }
+            return response()->json([
+                'status'   => 'success',
+                'message'  => 'New Item added to inventory',
+                'redirect' => route('inventory')
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+            ], 500);
         }
-        return response()->json([
-            'status'   => 'success',
-            'message'  => 'New Item added to inventory',
-            'redirect' => route('inventory')
-        ], 200);
     }
 
     public function update(Request $request, $id)
     {
-        
+
 
         $validator = Validator::make($request->all(), [
             'name'        => 'sometimes|string|max:255',
@@ -78,21 +86,26 @@ class InventoryController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+        try {
+            $item = Inventory::find($id);
 
-        $item = Inventory::find($id);
+            if (!$item) {
+                return response()->json(['message' => 'Item not found'], 404);
+            }
 
-        if (!$item) {
-            return response()->json(['message' => 'Item not found'], 404);
+
+            $item->update($request->all());
+
+            return response()->json([
+                'status'   => 'success',
+                'message'  => 'Item updated successfully',
+                'redirect' => route('inventory'),
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+            ], 500);
         }
-
-
-        $item->update($request->all());
-
-        return response()->json([
-            'status'   => 'success',
-            'message'  => 'Item updated successfully',
-            'redirect' => route('inventory'),
-        ], 200);
     }
 
     public function stockIn(Request $request, $id)
@@ -105,29 +118,35 @@ class InventoryController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+        try {
 
-        $item = Inventory::find($id);
+            $item = Inventory::find($id);
 
-        if (!$item) {
-            return response()->json(['message' => 'Item not found'], 404);
+            if (!$item) {
+                return response()->json(['message' => 'Item not found'], 404);
+            }
+
+            //Update the actual stock level
+            $item->increment('stock_level', $request->quantity);
+
+            // Create the History Log (Transaction)
+            InventoryTransaction::create([
+                'inventory_item_id' => $item->id,
+                'type'              => 'IN',       // Label this as Stock In
+                'quantity'          => $request->quantity,
+                'reason'            => $request->reason,
+            ]);
+
+            return response()->json([
+                'status'   => 'success',
+                'message'  => 'Stock added successfully',
+                'redirect' => route('inventory'),
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+            ], 500);
         }
-
-        //Update the actual stock level
-        $item->increment('stock_level', $request->quantity);
-
-        // Create the History Log (Transaction)
-        InventoryTransaction::create([
-            'inventory_item_id' => $item->id,
-            'type'              => 'IN',       // Label this as Stock In
-            'quantity'          => $request->quantity,
-            'reason'            => $request->reason,
-        ]);
-
-        return response()->json([
-            'status'   => 'success',
-            'message'  => 'Stock added successfully',
-            'redirect' => route('inventory'),
-        ], 200);
     }
 
     public function stockOut(Request $request, $id)
@@ -140,62 +159,73 @@ class InventoryController extends Controller
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
+        try {
+            $item = Inventory::find($id);
 
-        $item = Inventory::find($id);
+            if (!$item) {
+                return response()->json(['message' => 'Item not found'], 404);
+            }
 
-        if (!$item) {
-            return response()->json(['message' => 'Item not found'], 404);
-        }
+            if ($item->stock_level < $request->quantity) {
+                return response()->json([
+                    'status'  => 'error',
+                    'message' => 'Insufficient stock level'
+                ], 400);
+            }
 
-        if ($item->stock_level < $request->quantity) {
+            // Update the actual stock level
+            $item->decrement('stock_level', $request->quantity);
+
+            // Create the History Log (Transaction)
+            InventoryTransaction::create([
+                'inventory_item_id' => $item->id,
+                'type'              => 'OUT',      // Label this as Stock Out
+                'quantity'          => $request->quantity,
+                'reason'            => $request->reason,
+            ]);
+
             return response()->json([
-                'status'  => 'error',
-                'message' => 'Insufficient stock level'
-            ], 400);
+                'status'   => 'success',
+                'message'  => 'Stock removed successfully',
+                'redirect' => route('inventory'),
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Update the actual stock level
-        $item->decrement('stock_level', $request->quantity);
-
-        // Create the History Log (Transaction)
-        InventoryTransaction::create([
-            'inventory_item_id' => $item->id,
-            'type'              => 'OUT',      // Label this as Stock Out
-            'quantity'          => $request->quantity,
-            'reason'            => $request->reason,
-        ]);
-
-        return response()->json([
-            'status'   => 'success',
-            'message'  => 'Stock removed successfully',
-            'redirect' => route('inventory'),
-        ], 200);
     }
 
     // Handle Delete
     public function destroy(String $id)
     {
-        $item = Inventory::find($id);
+        try {
+            $item = Inventory::find($id);
 
-        if ($item) {
-            if ($item->stock_level > 0) {
-                InventoryTransaction::create([
-                    'inventory_item_id' => $item->id,
-                    'type'              => 'OUT',
-                    'quantity'          => $item->stock_level,
-                    'reason'            => 'Item Archived',
-                ]);
+            if ($item) {
+                if ($item->stock_level > 0) {
+                    InventoryTransaction::create([
+                        'inventory_item_id' => $item->id,
+                        'type'              => 'OUT',
+                        'quantity'          => $item->stock_level,
+                        'reason'            => 'Item Archived',
+                    ]);
+                }
+                $item->delete();
+                return response()->json([
+                    'status'   => 'success',
+                    'message'  => 'Item deleted successfully',
+                    'redirect' => route('inventory'),
+                ], 200);
+            } else {
+                return response()->json([
+                    'message' => 'Item not found',
+                ], 404);
             }
-            $item->delete();
+        } catch (\Exception $e) {
             return response()->json([
-                'status'   => 'success',
-                'message'  => 'Item deleted successfully',
-                'redirect' => route('inventory'),
-            ], 200);
-        } else {
-            return response()->json([
-                'message' => 'Item not found',
-            ], 404);
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+            ], 500);
         }
     }
 }

@@ -309,7 +309,6 @@
         const statusInactive = document.getElementById('statusInactive');
         const resetPassInput = document.getElementById('reset_password');
 
-        // Display Elements for real-time update
         const headerName = document.getElementById('headerName');
         const headerStatusBadge = document.getElementById('headerStatusBadge');
         const displayName = document.getElementById('display-name');
@@ -379,7 +378,6 @@
                     const result = await response.json();
 
                     if (response.ok) {
-                        // Update UI Elements Immediately
                         headerName.innerText = data.name;
                         displayName.innerText = data.name;
                         displayEmail.innerText = data.email;
@@ -410,7 +408,6 @@
                             timer: 1500,
                             showConfirmButton: false
                         }).then(() => {
-                            // AUTO RELOAD ADDED HERE
                             window.location.reload();
                         });
                     } else {

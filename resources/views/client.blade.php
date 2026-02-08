@@ -251,7 +251,7 @@
     if (table) {
         table.addEventListener('click', (e) => {
 
-            // 1. Handle Edit Click
+            // Handle Edit Click
             const editBtn = e.target.closest('.edit-btn');
             if (editBtn) {
                 // Prevent row click event
@@ -268,7 +268,7 @@
                 return;
             }
 
-            // 2. Handle Delete Click
+            // Handle Delete Click
             const deleteBtn = e.target.closest('.delete-btn');
             if (deleteBtn) {
                 // Prevent row click event
@@ -316,7 +316,7 @@
                 return;
             }
 
-            // 3. Handle Row Click (Navigate to Panel)
+            // Handle Row Click (Navigate to Panel)
             const row = e.target.closest('tr[data-href]');
             if (row) {
                 window.location.href = row.dataset.href;

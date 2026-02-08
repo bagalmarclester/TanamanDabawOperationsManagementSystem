@@ -19,18 +19,23 @@ class ProfileController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
+        try {
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+                'phone' => 'nullable|string|max:20',
+                'location' => 'nullable|string|max:255',
+                'bio' => 'nullable|string|max:500',
+            ]);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-            'phone' => 'nullable|string|max:20',
-            'location' => 'nullable|string|max:255',
-            'bio' => 'nullable|string|max:500',
-        ]);
-        
-        $user->fill($validated)->save();
+            $user->fill($validated)->save();
 
-        return back()->with('status', 'profile-updated');
+            return back()->with('status', 'profile-updated');
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function updatePassword(Request $request)
