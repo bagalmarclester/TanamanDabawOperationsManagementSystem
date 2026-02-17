@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\ProjectImage;
 use App\Models\Quote;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -54,7 +55,7 @@ class ProjectController extends Controller
             'project_end_date' => 'required|date|after:today',
             'client_id' => 'required|exists:clients,id',
             'quote_id' => 'nullable|exists:quotes,id',
-            'project_description' => 'nullable|string',
+            'project_description' => 'nullable|str9ing',
             'project_location' => 'required|string|max:255',
             'head_landscaper_id' => 'nullable|exists:users,id',
             'crew_ids' => 'nullable|array',
@@ -265,28 +266,62 @@ class ProjectController extends Controller
     public function complete(string $id)
     {
         try {
-            // Load the project with the images count
-            $project = Project::withCount('images')->findOrFail($id);
+            DB::transaction(function () use ($id) {
+                // 1. Load project with quote items
+                $project = Project::with(['quote.items', 'client'])->withCount('images')->findOrFail($id);
 
-            // Check if the project has at least one image
-            if ($project->images_count === 0) {
-                return response()->json([
-                    'message' => 'Cannot complete project: At least one project image is required.'
-                ], 422);
-            }
+                // 2. Validation: Ensure images exist before completing
+                if ($project->images_count === 0) {
+                    throw new \Exception('At least one project image is required to complete the project.');
+                }
 
-            // Update the status
-            $project->update([
-                'is_active' => false
-            ]);
+                $project->update(['is_active' => false]);
+
+                $invoice = \App\Models\Invoice::create([
+                    'project_id'   => $project->id,
+                    'client_id'    => $project->client_id,
+                    'issue_date'   => now(),
+                    'due_date'     => Carbon::now()->addDays(14), // Default 14-day due date
+                    'total_amount' => 0,
+                    'status'       => 'draft'
+                ]);
+
+                $grandTotal = 0;
+
+                if ($project->quote && $project->quote->items->count() > 0) {
+                    foreach ($project->quote->items as $item) {
+                        $lineTotal = $item->quantity * $item->price;
+                        $grandTotal += $lineTotal;
+
+                        \App\Models\InvoiceItem::create([
+                            'invoice_id'  => $invoice->id,
+                            'description' => $item->description,
+                            'quantity'    => $item->quantity,
+                            'price'       => $item->price,
+                            'total'       => $lineTotal
+                        ]);
+                    }
+                } else {
+                    $grandTotal = $project->project_budget;
+                    \App\Models\InvoiceItem::create([
+                        'invoice_id'  => $invoice->id,
+                        'description' => 'Project Completion: ' . $project->project_name,
+                        'quantity'    => 1,
+                        'price'       => $project->project_budget,
+                        'total'       => $project->project_budget
+                    ]);
+                }
+
+                $invoice->update(['total_amount' => $grandTotal]);
+            });
 
             return response()->json([
-                'message' => 'Project marked as completed successfully',
+                'message' => 'Project completed and Invoice generated successfully',
                 'redirect' => route('projects')
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => $e->getMessage()
             ], 500);
         }
     }

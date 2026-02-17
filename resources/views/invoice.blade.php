@@ -157,9 +157,6 @@
             <input type="text" id="searchInput" placeholder="Search invoices..." style="padding: 10px 10px 10px 35px; border: 1px solid #ddd; border-radius: 6px; outline: none; width: 250px;">
             <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b;"></i>
         </div>
-        <button class="btn-primary" id="addInvoiceBtn" style="background-color: #319B72; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
-            <i class="fas fa-plus"></i> Create Invoice
-        </button>
     </div>
 </div>
 

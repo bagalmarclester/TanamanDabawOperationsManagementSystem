@@ -12,15 +12,6 @@ class ClientController extends Controller
     public function index(Request $request)
     {
         $query = Client::query();
-
-        if ($request->filled('search')) {
-            $searchTerm = $request->input('search');
-
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', "%{$searchTerm}%")
-                    ->orWhere('email', 'like', "%{$searchTerm}%");
-            });
-        }
         $clients = $query->paginate(20)->withQueryString();
         return view('client', compact('clients'));
     }

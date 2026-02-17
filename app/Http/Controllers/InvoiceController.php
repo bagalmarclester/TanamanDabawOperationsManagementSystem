@@ -15,11 +15,16 @@ class InvoiceController extends Controller
 {
     public function index()
     {
-        // Get invoices with relations for the table
-        $invoices = Invoice::with(['client', 'project'])->latest()->get();
+        $invoices = Invoice::with([
+            'client' => function ($query) {
+                $query->withTrashed();
+            },
+            'project' => function ($query) {
+                $query->withTrashed();
+            }
+        ])->latest()->get();
 
-        // Get active projects for the "Create Invoice" dropdown
-        $projects = Project::where('is_active', false)->get();
+        $projects = Project::where('is_active', true)->get();
 
         return view('invoice', compact('invoices', 'projects'));
     }
