@@ -55,7 +55,7 @@ class ProjectController extends Controller
             'project_end_date' => 'required|date|after:today',
             'client_id' => 'required|exists:clients,id',
             'quote_id' => 'nullable|exists:quotes,id',
-            'project_description' => 'nullable|str9ing',
+            'project_description' => 'nullable|string',
             'project_location' => 'required|string|max:255',
             'head_landscaper_id' => 'nullable|exists:users,id',
             'crew_ids' => 'nullable|array',
