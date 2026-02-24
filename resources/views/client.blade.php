@@ -114,9 +114,6 @@
         </tbody>
     </table>
 
-    <div style="margin-top: 20px;">
-        {{ $clients->links() }}
-    </div>
 </div>
 
 <div class="modal-overlay" id="clientModal">

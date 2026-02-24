@@ -12,10 +12,9 @@ class EnsureNotInstalled
     public function handle(Request $request, Closure $next): Response
     {
         // If an Admin already exists, kick them to login
-        if (User::where('is_admin', true)->exists()) {
+        if (User::where('role', 'Admin')->exists()) {
             return redirect('/login');
-        } 
-
+        }
         return $next($request);
     }
 }

@@ -17,10 +17,9 @@ class DashboardController extends Controller
         $totalClients = Client::count();
         $clients = Client::all();
         $totalActiveProjects = Project::where('is_active', 1)->count();
-        $totalEmployees = User::where('is_admin', false)
+        $totalEmployees = User::where('role', '!=', 'Admin')
             ->orderBy('created_at', 'desc')
             ->count();
-
         $totalAcceptedQuotes = Quote::where('status', 'accepted')->count();
         $totalSentInvoices = Invoice::where('status', 'sent')->count();
         $totalInventoryItems = Inventory::count();

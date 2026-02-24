@@ -12,7 +12,7 @@ class ClientController extends Controller
     public function index(Request $request)
     {
         $query = Client::query();
-        $clients = $query->paginate(20)->withQueryString();
+        $clients = $query->get();
         return view('client', compact('clients'));
     }
 
