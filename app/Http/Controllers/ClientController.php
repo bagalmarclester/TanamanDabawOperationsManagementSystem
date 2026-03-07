@@ -116,22 +116,8 @@ class ClientController extends Controller
 
     public function show(string $id)
     {
-        try {
+        $client = Client::findOrFail($id);
 
-        
-        $client = Client::find($id);
-        if (!$client) {
-            return response()->json([
-                'message' => "Client not found!",
-                'redirect' => route('clients')
-            ], 404);
-        }
         return view('clientpanel', compact('client'));
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'An unexpected error has occured'
-            ], 500);
-        }
     }
 }

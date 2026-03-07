@@ -164,12 +164,12 @@ class ProjectController extends Controller
 
     public function show(string $id)
     {
-        $project = Project::find($id);
-        if (!$project) {
-            return response()->json([
-                'message' => 'Project not found!'
-            ], 404);
-        }
+        $project = Project::findOrFail($id);
+        // if (!$project) {
+        //     return response()->json([
+        //         'message' => 'Project not found!'
+        //     ], 404);
+        // }
         $signedImages = [];
         /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
         $disk = Storage::disk('s3');
