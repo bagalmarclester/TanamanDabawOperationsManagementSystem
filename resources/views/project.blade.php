@@ -492,55 +492,141 @@
     });
 
     form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('project_id').value;
-        
-        const formData = {
-            project_name: document.getElementById('p_name').value,
-            client_id: document.getElementById('p_client').value,
-            project_end_date: document.getElementById('p_deadline').value,
-            project_budget: document.getElementById('p_budget').value,
-            project_location: document.getElementById('p_location').value,
-            project_description: document.getElementById('p_description').value,
-            head_landscaper_id: document.getElementById('p_head').value,
-            crew_ids: crewSelect.getValue(),
-            quote_id: id ? null : document.getElementById('p_quote').value
-        };
+    e.preventDefault();
+    
+    // VALIDATION: Check for empty fields
+    const projectName = document.getElementById('p_name').value.trim();
+    const clientId = document.getElementById('p_client').value.trim();
+    const deadline = document.getElementById('p_deadline').value.trim();
+    const budget = document.getElementById('p_budget').value.trim();
+    const location = document.getElementById('p_location').value.trim();
 
-        const url = id ? `/projects/${id}` : "{{ route('projects.create') }}";
-        const method = id ? 'PUT' : 'POST';
+    let emptyFields = [];
 
-        try {
-            const response = await fetch(url, {
-                method: method,
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}', 
-                    'Accept': 'application/json' 
-                },
-                body: JSON.stringify(formData)
-            });
+    if (!projectName) emptyFields.push('Project Name');
+    if (!clientId) emptyFields.push('Client');
+    if (!deadline) emptyFields.push('Deadline');
+    if (!budget) emptyFields.push('Budget');
+    if (!location) emptyFields.push('Location');
 
-            const result = await response.json();
+    if (emptyFields.length > 0) {
+        Swal.fire({
+            title: 'Error',
+            html: '<div class="swal2-html-container">Fields are required.</div>',
+            icon: 'error',
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'OK'
+        });
+        return; 
+    }
 
-            if (response.ok) {
-                modal.style.display = 'none';
+    const id = document.getElementById('project_id').value;
+    
+    // If editing, check if any changes were made
+    if (id) {
+        const editBtn = document.querySelector(`.edit-btn[data-id="${id}"]`);
+        if (editBtn) {
+            const originalData = {
+                project_name: editBtn.dataset.name,
+                client_id: editBtn.dataset.clientId,
+                project_end_date: editBtn.dataset.deadline,
+                project_budget: editBtn.dataset.budget,
+                project_location: editBtn.dataset.location,
+                project_description: editBtn.dataset.description || '',
+                head_landscaper_id: editBtn.dataset.headId || '',
+                crew_ids: editBtn.dataset.crew ? JSON.parse(editBtn.dataset.crew) : []
+            };
+
+            const currentCrew = crewSelect.getValue();
+            const currentData = {
+                project_name: projectName,
+                client_id: clientId,
+                project_end_date: deadline,
+                project_budget: budget,
+                project_location: location,
+                project_description: document.getElementById('p_description').value || '',
+                head_landscaper_id: document.getElementById('p_head').value || '',
+                crew_ids: Array.isArray(currentCrew) ? currentCrew : []
+            };
+
+            // Check if any field changed
+            const hasChanges = 
+                originalData.project_name !== currentData.project_name ||
+                originalData.client_id !== currentData.client_id ||
+                originalData.project_end_date !== currentData.project_end_date ||
+                originalData.project_budget !== currentData.project_budget ||
+                originalData.project_location !== currentData.project_location ||
+                originalData.project_description !== currentData.project_description ||
+                originalData.head_landscaper_id !== currentData.head_landscaper_id ||
+                JSON.stringify(originalData.crew_ids.sort()) !== JSON.stringify(currentData.crew_ids.sort());
+
+            if (!hasChanges) {
                 Swal.fire({
                     title: 'Success!',
-                    text: result.message,
+                    html: '<div class="swal2-html-container">No changes were made.</div>',
                     icon: 'success',
                     timer: 1500,
                     showConfirmButton: false
-                }).then(() => window.location.reload());
-            } else {
-                let msg = result.message || 'Validation Failed';
-                if(result.errors) msg = Object.values(result.errors).flat().join('\n');
-                Swal.fire('Error', msg, 'error');
+                }).then(() => {
+                    modal.style.display = 'none';
+                    window.location.reload();
+                });
+                return;
             }
-        } catch (error) {
-            Swal.fire('Error', 'System error occurred', 'error');
         }
-    });
+    }
+    
+    const formData = {
+        project_name: projectName,
+        client_id: clientId,
+        project_end_date: deadline,
+        project_budget: budget,
+        project_location: location,
+        project_description: document.getElementById('p_description').value,
+        head_landscaper_id: document.getElementById('p_head').value,
+        crew_ids: crewSelect.getValue(),
+        quote_id: id ? null : document.getElementById('p_quote').value
+    };
+
+    const url = id ? `/projects/${id}` : "{{ route('projects.create') }}";
+    const method = id ? 'PUT' : 'POST';
+
+    try {
+        Swal.fire({
+            title: 'Processing...',
+            didOpen: () => Swal.showLoading()
+        });
+
+        const response = await fetch(url, {
+            method: method,
+            headers: { 
+                'Content-Type': 'application/json', 
+                'X-CSRF-TOKEN': '{{ csrf_token() }}', 
+                'Accept': 'application/json' 
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            modal.style.display = 'none';
+            Swal.fire({
+                title: 'Success!',
+                text: result.message,
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => window.location.reload());
+        } else {
+            let msg = result.message || 'Validation Failed';
+            if(result.errors) msg = Object.values(result.errors).flat().join('\n');
+            Swal.fire('Error', msg, 'error');
+        }
+    } catch (error) {
+        Swal.fire('Error', 'System error occurred', 'error');
+    }
+});
 
     const closeModal = () => modal.style.display = 'none';
     document.querySelectorAll('.close-modal-btn, .btn-cancel').forEach(b => b.onclick = closeModal);

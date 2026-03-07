@@ -727,7 +727,7 @@ html[data-sidebar-collapsed="1"] .sidebar .sidebar-footer .sign-out-link { justi
 
     background-color: #319B72; color: white; border: none;
 
-    padding: 10px 20px; border-radius: 6px; cursor: pointer;
+    padding: 8px 12px; border-radius: 4px; cursor: pointer;
 
     font-size: 0.95rem; display: flex; align-items: center; gap: 8px;
 

@@ -88,7 +88,7 @@
         background-color: #dc2626;
     }
 
-    /* View Button Design */
+
     .view-btn {
         background-color: #10b981;
         color: #fff;
@@ -99,18 +99,116 @@
         background-color: #059669;
     }
 
-    /* Helper to hide elements in View Mode */
     .view-mode-active .btn-remove,
     .view-mode-active #addItemBtn,
     .view-mode-active #saveQuoteBtn {
         display: none !important;
     }
 
-    /* Visually indicate disabled inputs in view mode */
     .view-mode-active input {
         background-color: #f8fafc;
         border-color: #e2e8f0;
         color: #64748b;
+    }
+
+    /* Tabs Container */
+    .tabs-container {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 10px;
+    }
+
+    /* Status Tabs -*/
+    .status-tabs {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+
+    .status-tab {
+        padding: 6px 14px;
+        cursor: pointer;
+        font-weight: 600;
+        border: none;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Pending Tab - Orange Theme */
+    .status-tab.pending-tab {
+        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+        color: #c2410c;
+        border: 1px solid #fed7aa;
+    }
+
+    .status-tab.pending-tab:hover {
+        background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(194, 65, 12, 0.2);
+    }
+
+    .status-tab.pending-tab.active {
+        background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        color: white;
+        border-color: #c2410c;
+        box-shadow: 0 3px 8px rgba(234, 88, 12, 0.4);
+    }
+
+    /* Accepted Tab - Green Theme */
+    .status-tab.accepted-tab {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+    }
+
+    .status-tab.accepted-tab:hover {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(21, 128, 61, 0.2);
+    }
+
+    .status-tab.accepted-tab.active {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: white;
+        border-color: #15803d;
+        box-shadow: 0 3px 8px rgba(22, 163, 74, 0.4);
+    }
+
+    .status-tab .count {
+        background: rgba(255,255,255,0.9);
+        color: inherit;
+        padding: 1px 6px;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        min-width: 18px;
+        text-align: center;
+    }
+
+    .status-tab.active .count {
+        background: rgba(255,255,255,0.95);
+        color: #333;
+    }
+
+    .table-section {
+        display: none;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .table-section.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 </style>
 
@@ -121,63 +219,131 @@
     </div>
 
     <div style="display: flex; gap: 10px; align-items: center;">
-        <div style="position: relative;">
-            <input type="text" id="searchInput" placeholder="Search quotes..." style="padding: 10px 10px 10px 35px; border: 1px solid #ddd; border-radius: 6px; outline: none; width: 250px;">
+        <form action="{{ route('quotes') }}" method="GET" style="position: relative; margin: 0;">
+            <input type="text" name="search" id="searchInput" value="{{ request('search') }}" placeholder="Search quotes..." style="padding: 10px 10px 10px 35px; border: 1px solid #ddd; border-radius: 6px; outline: none; width: 250px;">
             <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #64748b;"></i>
-        </div>
+        </form>
+
         <button class="btn-primary" id="addQuoteBtn">
             <i class="fas fa-plus"></i> Create Quote
         </button>
     </div>
 </div>
 
-<div class="table-container">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Client / Subject</th>
-                <th>Total</th>
-                <th>Created</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="quotesTableBody">
-            @forelse($quotes as $quote)
-            <tr>
-                <td>
-                    <div style="font-weight: 600; color: #334155;">{{ $quote->subject ?? 'Unknown Subject' }}</div>
-                    <div style="font-size: 0.85rem; color: #64748b;">{{ $quote->client->name ?? 'Unknown Client' }}</div>
-                </td>
-                <td>₱{{ number_format($quote->total_amount, 2) }}</td>
-                <td>{{ \Carbon\Carbon::parse($quote->quote_date)->format('M d, Y') }}</td>
-                <td>
-                    <span class="status-badge {{ strtolower($quote->status) }}">{{ ucfirst($quote->status) }}</span>
-                </td>
-                <td>
-                    @if(strtolower($quote->status) === 'archived')
-                    {{-- ARCHIVED: Show Eye, Hide Delete --}}
-                    <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    @else
-                    {{-- ACTIVE: Show Edit & Delete --}}
-                    <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                    @endif
-                </td>
-            </tr>
-            @empty
-            <tr>
-                <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">No quotes found.</td>
-            </tr>
-            @endforelse
-        </tbody>
-    </table>
+<!-- Tabs Container: Below header, aligned right -->
+<div class="tabs-container">
+    <div class="status-tabs">
+        <button class="status-tab pending-tab active" data-status="pending" onclick="switchStatusTab('pending')">
+            <i class="fas fa-clock"></i>
+            Pending
+            <span class="count">{{ $quotes->where('status', 'pending')->count() }}</span>
+        </button>
+        <button class="status-tab accepted-tab" data-status="accepted" onclick="switchStatusTab('accepted')">
+            <i class="fas fa-check-circle"></i>
+            Accepted
+            <span class="count">{{ $quotes->where('status', 'accepted')->count() }}</span>
+        </button>
+    </div>
+</div>
+
+<!-- Pending Quotes Table -->
+<div class="table-section active" id="pending-section">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Client / Subject</th>
+                    <th>Total</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody class="quotes-tbody" data-status="pending">
+                @forelse($quotes->where('status', 'pending') as $quote)
+                <tr>
+                    <td>
+                        <div style="font-weight: 600; color: #334155;">{{ $quote->subject ?? 'Unknown Subject' }}</div>
+                        <div style="font-size: 0.85rem; color: #64748b;">{{ $quote->client->name ?? 'Unknown Client' }}</div>
+                    </td>
+                    <td>₱{{ number_format($quote->total_amount, 2) }}</td>
+                    <td>{{ \Carbon\Carbon::parse($quote->quote_date)->format('M d, Y') }}</td>
+                    <td>
+                        <span class="status-badge {{ strtolower($quote->status) }}">{{ ucfirst($quote->status) }}</span>
+                    </td>
+                    <td>
+                        @if(strtolower($quote->status) === 'archived')
+                        <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        @else
+                        <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        @endif
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">No pending quotes found.</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Accepted Quotes Table -->
+<div class="table-section" id="accepted-section">
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Client / Subject</th>
+                    <th>Total</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody class="quotes-tbody" data-status="accepted">
+                @forelse($quotes->where('status', 'accepted') as $quote)
+                <tr>
+                    <td>
+                        <div style="font-weight: 600; color: #334155;">{{ $quote->subject ?? 'Unknown Subject' }}</div>
+                        <div style="font-size: 0.85rem; color: #64748b;">{{ $quote->client->name ?? 'Unknown Client' }}</div>
+                    </td>
+                    <td>₱{{ number_format($quote->total_amount, 2) }}</td>
+                    <td>{{ \Carbon\Carbon::parse($quote->quote_date)->format('M d, Y') }}</td>
+                    <td>
+                        <span class="status-badge {{ strtolower($quote->status) }}">{{ ucfirst($quote->status) }}</span>
+                    </td>
+                    <td>
+                        @if(strtolower($quote->status) === 'archived')
+                        <button class="btn-action view-btn" data-quote="{{ json_encode($quote) }}" title="View Details">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        @else
+                        <button class="btn-action edit-btn" data-quote="{{ json_encode($quote) }}" title="Edit">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-action delete-btn" data-id="{{ $quote->id }}" title="Delete">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                        @endif
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 20px; color: #64748b;">No accepted quotes found.</td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 </div>
 
 <div class="modal-overlay" id="addQuoteModal">
@@ -237,11 +403,28 @@
 @endsection
 
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.default.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11 "></script>
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.default.min.css " rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js "></script>
 
 <script>
+    // Tab switching function
+    function switchStatusTab(status) {
+        // Update tab buttons
+        document.querySelectorAll('.status-tab').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.dataset.status === status) {
+                tab.classList.add('active');
+            }
+        });
+
+        // Update table sections
+        document.querySelectorAll('.table-section').forEach(section => {
+            section.classList.remove('active');
+        });
+        document.getElementById(status + '-section').classList.add('active');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
@@ -522,16 +705,18 @@
             }
         });
 
-        // Search Logic
+        // Search Logic - works on active table only
         const searchInput = document.getElementById('searchInput');
-        const tableBody = document.getElementById('quotesTableBody');
-        if (searchInput && tableBody) {
+        if (searchInput) {
             searchInput.addEventListener('keyup', function() {
                 const filter = searchInput.value.toLowerCase();
-                const rows = tableBody.getElementsByTagName('tr');
-                for (let i = 0; i < rows.length; i++) {
-                    let textContent = rows[i].innerText.toLowerCase();
-                    rows[i].style.display = textContent.includes(filter) ? "" : "none";
+                const activeSection = document.querySelector('.table-section.active');
+                if (activeSection) {
+                    const rows = activeSection.querySelectorAll('.quotes-tbody tr');
+                    for (let i = 0; i < rows.length; i++) {
+                        let textContent = rows[i].innerText.toLowerCase();
+                        rows[i].style.display = textContent.includes(filter) ? "" : "none";
+                    }
                 }
             });
         }

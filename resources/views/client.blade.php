@@ -161,221 +161,231 @@
 
 @push('scripts')
 <script>
-    // --- UI INTERACTION SCRIPTS ---
-    const profileTrigger = document.getElementById('profile-trigger');
-    const dropdownMenu = document.getElementById('profile-dropdown');
-    const dropdownIcon = document.querySelector('.dropdown-icon');
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- MODAL VARIABLES ---
+        const modal = document.getElementById('clientModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const addBtn = document.getElementById('addClientBtn');
+        const closeBtn = document.querySelector('.close-modal-btn');
+        const cancelBtn = document.querySelector('.btn-cancel');
+        const saveBtn = document.querySelector('.btn-save');
 
-    if (profileTrigger) {
-        profileTrigger.addEventListener('click', function(e) {
-            e.stopPropagation();
-            dropdownMenu.classList.toggle('show');
-            dropdownIcon.style.transform = dropdownMenu.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0deg)';
+        const clientIdField = document.getElementById('client_id');
+        const nameField = document.getElementById('name');
+        const emailField = document.getElementById('email');
+        const phoneField = document.getElementById('phone');
+        const addressField = document.getElementById('address');
+
+        console.log('Elements found:', {
+            modal: !!modal,
+            addBtn: !!addBtn,
+            saveBtn: !!saveBtn
         });
 
-        window.addEventListener('click', function(e) {
-            if (!dropdownMenu.contains(e.target) && !profileTrigger.contains(e.target)) {
-                dropdownMenu.classList.remove('show');
-                dropdownIcon.style.transform = 'rotate(0deg)';
-            }
-        });
-    }
-
-    // Sidebar toggle is handled globally in the navbar partial.
-
-    // --- MODAL VARIABLES ---
-    const modal = document.getElementById('clientModal');
-    const modalTitle = document.getElementById('modalTitle');
-    const addBtn = document.getElementById('addClientBtn');
-    const closeBtn = document.querySelector('.close-modal-btn');
-    const cancelBtn = document.querySelector('.btn-cancel');
-    const saveBtn = document.querySelector('.btn-save');
-
-    const clientIdField = document.getElementById('client_id');
-    const nameField = document.getElementById('name');
-    const emailField = document.getElementById('email');
-    const phoneField = document.getElementById('phone');
-    const addressField = document.getElementById('address');
-
-    // --- SEARCH LOGIC ---
-    const searchInput = document.getElementById('searchInput');
-    const tableBody = document.getElementById('clientTableBody');
-
-    if (searchInput && tableBody) {
-        searchInput.addEventListener('keyup', function() {
-            const filter = searchInput.value.toLowerCase();
-            const rows = tableBody.getElementsByTagName('tr');
-
-            for (let i = 0; i < rows.length; i++) {
-                let textContent = rows[i].innerText.toLowerCase();
-                // Toggle visibility based on search match
-                if (textContent.includes(filter)) {
-                    rows[i].style.display = "";
-                } else {
-                    rows[i].style.display = "none";
-                }
-            }
-        });
-    }
-
-    // --- OPEN MODAL (ADD) ---
-    if (addBtn) {
-        addBtn.addEventListener('click', () => {
-            clientIdField.value = '';
-            nameField.value = '';
-            emailField.value = '';
-            phoneField.value = '';
-            phoneField.placeholder = '09xx000xxxx';
-            addressField.value = '';
-
-            modalTitle.innerText = "Add New Client";
-            modal.style.display = 'flex';
-        });
-    }
-
-    // --- TABLE ACTIONS (DELEGATION) ---
-    const table = document.querySelector('.data-table');
-    if (table) {
-        table.addEventListener('click', (e) => {
-
-            // Handle Edit Click
-            const editBtn = e.target.closest('.edit-btn');
-            if (editBtn) {
-                // Prevent row click event
+        // --- OPEN MODAL (ADD) ---
+        if (addBtn) {
+            addBtn.addEventListener('click', function(e) {
+                e.preventDefault();
                 e.stopPropagation();
-
-                clientIdField.value = editBtn.getAttribute('data-id');
-                nameField.value = editBtn.getAttribute('data-name');
-                emailField.value = editBtn.getAttribute('data-email');
-                phoneField.value = editBtn.getAttribute('data-phone');
-                addressField.value = editBtn.getAttribute('data-address');
-
-                modalTitle.innerText = "Edit Client";
-                modal.style.display = 'flex';
-                return;
-            }
-
-            // Handle Delete Click
-            const deleteBtn = e.target.closest('.delete-btn');
-            if (deleteBtn) {
-                // Prevent row click event
-                e.stopPropagation();
-
-                const id = deleteBtn.getAttribute('data-id');
-
-                Swal.fire({
-                    title: 'Are you sure?',
-                    text: "You won't be able to revert this!",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#d33',
-                    cancelButtonColor: '#3085d6',
-                    confirmButtonText: 'Yes, delete it!'
-                }).then(async (result) => {
-                    if (result.isConfirmed) {
-                        try {
-                            const response = await fetch(`/clients/${id}`, {
-                                method: 'DELETE',
-                                headers: {
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                                    'Accept': 'application/json'
-                                }
-                            });
-
-                            if (response.ok) {
-                                Swal.fire({
-                                        title: 'Deleted!',
-                                        text: result.message,
-                                        icon: 'success',
-                                        timer: 1500,
-                                        showConfirmButton: false
-                                    })
-                                    .then(() => window.location.reload());
-                            } else {
-                                Swal.fire('Error', 'Could not delete client.', 'error');
-                            }
-                        } catch (error) {
-                            console.error(error);
-                            Swal.fire('Error', 'System error occurred', 'error');
-                        }
-                    }
-                });
-                return;
-            }
-
-            // Handle Row Click (Navigate to Panel)
-            const row = e.target.closest('tr[data-href]');
-            if (row) {
-                window.location.href = row.dataset.href;
-            }
-        });
-    }
-
-    // --- CLOSE MODAL HELPERS ---
-    const closeModal = () => {
-        if (modal) modal.style.display = 'none';
-    };
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-
-    // --- SAVE / UPDATE LOGIC ---
-    if (saveBtn) {
-        saveBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-
-            const id = clientIdField.value;
-            const formData = {
-                name: nameField.value,
-                email: emailField.value,
-                phone: phoneField.value,
-                address: addressField.value
-            };
-
-            let url = "{{ route('clients.create') }}";
-            let method = 'POST';
-
-            if (id) {
-                url = `/clients/${id}`;
-                method = 'PUT';
-            }
-
-            try {
                 
+                console.log('Add button clicked');
+
+                // Clear form
+                clientIdField.value = '';
+                nameField.value = '';
+                emailField.value = '';
+                phoneField.value = '';
+                addressField.value = '';
+
+                modalTitle.innerText = "Add New Client";
+                modal.style.display = 'flex';
+            });
+        }
+
+        // --- CLOSE MODAL ---
+        const closeModal = () => {
+            if (modal) modal.style.display = 'none';
+        };
+        
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+
+        // Close on outside click
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) closeModal();
+            });
+        }
+
+        // --- SAVE / UPDATE LOGIC ---
+
+if (saveBtn) {
+    saveBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        // VALIDATION: Check if any field is empty
+        const name = nameField.value.trim();
+        const email = emailField.value.trim();
+        const phone = phoneField.value.trim();
+        const address = addressField.value.trim();
+
+        if (!name || !email || !phone || !address) {
+            Swal.fire({
+                title: 'Error',
+                html: '<div class="swal2-html-container">Fields are required.</div>',
+                icon: 'error',
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            Swal.fire({
+                title: 'Error',
+                html: '<div class="swal2-html-container">Wrong email format.</div>',
+                icon: 'error',
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        const phoneRegex = /^(?:\+63|0)9\d{9}$/;
+        const cleanPhone = phone.replace(/-/g, '').replace(/\s/g, '');
+        if (!phoneRegex.test(cleanPhone)) {
+            Swal.fire({
+                title: 'Error',
+                html: '<div class="swal2-html-container">Wrong phone format.</div>',
+                icon: 'error',
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        // If validation passes, proceed with save
+        const id = clientIdField.value;
+        const formData = {
+            name: name,
+            email: email,
+            phone: phone,
+            address: address
+        };
+
+        let url = "{{ route('clients.create') }}";
+        let method = 'POST';
+
+        if (id) {
+            url = `/clients/${id}`;
+            method = 'PUT';
+        }
+
+        try {
+            Swal.fire({
+                title: 'Processing...',
+                didOpen: () => Swal.showLoading()
+            });
+
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                modal.style.display = 'none';
                 Swal.fire({
-                    title: 'Processing...',
-                    didOpen: () => Swal.showLoading()
+                    title: 'Success!',
+                    text: result.message,
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => {
+                    window.location.reload();
                 });
-                const response = await fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    modal.style.display = 'none';
-                    Swal.fire({
-                        title: 'Success!',
-                        text: result.message,
-                        icon: 'success',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => {
-                        window.location.reload();
-                    });
-                } else {
-                    Swal.fire('Error', result.message || 'Validation Failed', 'error');
-                }
-            } catch (error) {
-                console.error(error);
-                Swal.fire('Error', 'System error occurred', 'error');
+            } else {
+                Swal.fire('Error', result.message || 'Validation Failed', 'error');
             }
-        });
-    }
+        } catch (error) {
+            console.error(error);
+            Swal.fire('Error', 'System error occurred', 'error');
+        }
+    });
+}
+        // --- TABLE ACTIONS ---
+        const table = document.querySelector('.data-table');
+        if (table) {
+            table.addEventListener('click', (e) => {
+                const editBtn = e.target.closest('.edit-btn');
+                const deleteBtn = e.target.closest('.delete-btn');
+                const row = e.target.closest('tr[data-href]');
+
+                if (editBtn) {
+                    e.stopPropagation();
+                    clientIdField.value = editBtn.dataset.id;
+                    nameField.value = editBtn.dataset.name;
+                    emailField.value = editBtn.dataset.email;
+                    phoneField.value = editBtn.dataset.phone;
+                    addressField.value = editBtn.dataset.address;
+
+                    modalTitle.innerText = "Edit Client";
+                    modal.style.display = 'flex';
+                    return;
+                }
+
+                if (deleteBtn) {
+                    e.stopPropagation();
+                    const id = deleteBtn.dataset.id;
+
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: "You won't be able to revert this!",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: 'Yes, delete it!'
+                    }).then(async (result) => {
+                        if (result.isConfirmed) {
+                            try {
+                                const response = await fetch(`/clients/${id}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                        'Accept': 'application/json'
+                                    }
+                                });
+
+                                if (response.ok) {
+                                    Swal.fire('Deleted!', 'Client has been deleted.', 'success')
+                                        .then(() => window.location.reload());
+                                } else {
+                                    Swal.fire('Error', 'Could not delete client.', 'error');
+                                }
+                            } catch (error) {
+                                Swal.fire('Error', 'System error occurred', 'error');
+                            }
+                        }
+                    });
+                    return;
+                }
+
+                if (row) {
+                    window.location.href = row.dataset.href;
+                }
+            });
+        }
+    });
 </script>
 @endpush
