@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+
 use function Symfony\Component\Clock\now;
 
 class ProjectController extends Controller
@@ -32,12 +33,13 @@ class ProjectController extends Controller
                 })
 
                 ->orderBy('project_start_date', 'asc')
-                ->get();
+                ->paginate(10);
+
             return view('projectcrew', compact('projects'));
         }
         $query = Project::with(['client', 'headLandscaper', 'fieldCrew']);
 
-        $projects = $query->latest()->get();
+        $projects = $query->latest()->paginate(10);
 
         $pendingQuotes = Quote::where('status', 'pending')->get();
         $clients = Client::all();
@@ -77,25 +79,25 @@ class ProjectController extends Controller
                     'head_landscaper_id' => $validated['head_landscaper_id'],
                 ]);
 
-                if (!empty($validated['crew_ids'])) {
+                if (! empty($validated['crew_ids'])) {
                     $project->fieldCrew()->sync($validated['crew_ids']);
                 }
 
-                if (!empty($validated['quote_id'])) {
+                if (! empty($validated['quote_id'])) {
                     Quote::where('id', $validated['quote_id'])->update(['status' => 'accepted']);
                 }
             });
+
             return response()->json([
                 'message' => 'Project created successfully',
-                'redirect' => route('projects')
+                'redirect' => route('projects'),
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: '.$e->getMessage(),
             ], 500);
         }
     }
-
 
     public function update(Request $request, string $id)
     {
@@ -131,11 +133,11 @@ class ProjectController extends Controller
 
             return response()->json([
                 'message' => 'Project updated successfully',
-                'redirect' => route('projects')
+                'redirect' => route('projects'),
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -146,18 +148,19 @@ class ProjectController extends Controller
             $project = Project::find($id);
             if ($project) {
                 $project->delete();
+
                 return response()->json([
                     'message' => 'Project deleted successfully',
-                    'redirect' => route('projects')
+                    'redirect' => route('projects'),
                 ], 200);
             } else {
                 return response()->json([
-                    'message' => 'Project not found'
+                    'message' => 'Project not found',
                 ], 404);
             }
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -179,9 +182,9 @@ class ProjectController extends Controller
                 $image->image_path,
                 \Illuminate\Support\Carbon::now()->addMinutes(15)
             );
-        };
+        }
 
-        return view("projectpanel", compact('project', 'signedImages'));
+        return view('projectpanel', compact('project', 'signedImages'));
     }
 
     public function uploadImage(Request $request, string $id)
@@ -194,27 +197,27 @@ class ProjectController extends Controller
             // Check file upload errors BEFORE touching the files
             if ($files) {
                 foreach ($files as $file) {
-                    if (!$file->isValid()) {
+                    if (! $file->isValid()) {
 
                         if ($file->getError() === UPLOAD_ERR_INI_SIZE || $file->getError() === UPLOAD_ERR_FORM_SIZE) {
                             return back()->withErrors([
-                                'progression_images' => 'One of the files is too large. Max upload size exceeded.'
+                                'progression_images' => 'One of the files is too large. Max upload size exceeded.',
                             ]);
                         }
 
                         return back()->withErrors([
-                            'progression_images' => 'Upload failed: ' . $file->getErrorMessage()
+                            'progression_images' => 'Upload failed: '.$file->getErrorMessage(),
                         ]);
                     }
                 }
             } else {
                 return response()->json([
-                    'message' => 'No files uploaded'
+                    'message' => 'No files uploaded',
                 ], 500);
             }
 
             // Upload valid files
-            $destinationPath = 'projects/' . $project->id;
+            $destinationPath = 'projects/'.$project->id;
 
             foreach ($files as $file) {
                 $s3Path = Storage::disk('s3')->putFile($destinationPath, $file);
@@ -228,7 +231,7 @@ class ProjectController extends Controller
             return back()->with('success', 'Photos uploaded successfully!');
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -244,26 +247,26 @@ class ProjectController extends Controller
                 foreach ($project->quote->items as $item) {
                     $items[] = [
                         'description' => $item->description,
-                        'quantity'    => $item->quantity,
-                        'price'       => $item->price,
+                        'quantity' => $item->quantity,
+                        'price' => $item->price,
                     ];
                 }
             } else {
                 $items[] = [
-                    'description' => 'Project Service: ' . $project->project_name,
-                    'quantity'    => 1,
-                    'price'       => $project->project_budget,
+                    'description' => 'Project Service: '.$project->project_name,
+                    'quantity' => 1,
+                    'price' => $project->project_budget,
                 ];
             }
 
             return response()->json([
-                'client_id'   => $project->client_id,
+                'client_id' => $project->client_id,
                 'client_name' => $project->client->name,
-                'items'       => $items
+                'items' => $items,
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -277,18 +280,18 @@ class ProjectController extends Controller
 
                 // 2. Validation: Ensure images exist before completing
                 if ($project->images_count === 0) {
-                throw new \Exception('At least one project image is required to complete the project.');
-               }
+                    throw new \Exception('At least one project image is required to complete the project.');
+                }
 
                 $project->update(['is_active' => false]);
 
                 $invoice = \App\Models\Invoice::create([
-                    'project_id'   => $project->id,
-                    'client_id'    => $project->client_id,
-                    'issue_date'   => now(),
-                    'due_date'     => Carbon::now()->addDays(14), // Default 14-day due date
+                    'project_id' => $project->id,
+                    'client_id' => $project->client_id,
+                    'issue_date' => now(),
+                    'due_date' => Carbon::now()->addDays(14), // Default 14-day due date
                     'total_amount' => 0,
-                    'status'       => 'draft'
+                    'status' => 'draft',
                 ]);
 
                 $grandTotal = 0;
@@ -299,21 +302,21 @@ class ProjectController extends Controller
                         $grandTotal += $lineTotal;
 
                         \App\Models\InvoiceItem::create([
-                            'invoice_id'  => $invoice->id,
+                            'invoice_id' => $invoice->id,
                             'description' => $item->description,
-                            'quantity'    => $item->quantity,
-                            'price'       => $item->price,
-                            'total'       => $lineTotal
+                            'quantity' => $item->quantity,
+                            'price' => $item->price,
+                            'total' => $lineTotal,
                         ]);
                     }
                 } else {
                     $grandTotal = $project->project_budget;
                     \App\Models\InvoiceItem::create([
-                        'invoice_id'  => $invoice->id,
-                        'description' => 'Project Completion: ' . $project->project_name,
-                        'quantity'    => 1,
-                        'price'       => $project->project_budget,
-                        'total'       => $project->project_budget
+                        'invoice_id' => $invoice->id,
+                        'description' => 'Project Completion: '.$project->project_name,
+                        'quantity' => 1,
+                        'price' => $project->project_budget,
+                        'total' => $project->project_budget,
                     ]);
                 }
 
@@ -322,11 +325,11 @@ class ProjectController extends Controller
 
             return response()->json([
                 'message' => 'Project completed and Invoice generated successfully',
-                'redirect' => route('projects')
+                'redirect' => route('projects'),
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }

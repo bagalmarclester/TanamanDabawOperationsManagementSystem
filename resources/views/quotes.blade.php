@@ -256,17 +256,17 @@
         <button class="status-tab all-tab active" data-status="all" onclick="switchStatusTab('all')">
             <i class="fas fa-list"></i>
             All
-            <span class="count">{{ $quotes->count() }}</span>
+            <span class="count">{{ $quoteCounts['all'] }}</span>
         </button>
         <button class="status-tab pending-tab" data-status="pending" onclick="switchStatusTab('pending')">
             <i class="fas fa-clock"></i>
             Pending
-            <span class="count">{{ $quotes->where('status', 'pending')->count() }}</span>
+            <span class="count">{{ $quoteCounts['pending'] }}</span>
         </button>
         <button class="status-tab accepted-tab" data-status="accepted" onclick="switchStatusTab('accepted')">
             <i class="fas fa-check-circle"></i>
             Accepted
-            <span class="count">{{ $quotes->where('status', 'accepted')->count() }}</span>
+            <span class="count">{{ $quoteCounts['accepted'] }}</span>
         </button>
     </div>
 </div>
@@ -335,7 +335,7 @@
                 </tr>
             </thead>
             <tbody class="quotes-tbody" data-status="pending">
-                @forelse($quotes->where('status', 'pending') as $quote)
+                @forelse($pendingQuotes as $quote)
                 <tr>
                     <td>
                         <div style="font-weight: 600; color: #334155;">{{ $quote->subject ?? 'Unknown Subject' }}</div>
@@ -385,7 +385,7 @@
                 </tr>
             </thead>
             <tbody class="quotes-tbody" data-status="accepted">
-                @forelse($quotes->where('status', 'accepted') as $quote)
+                @forelse($acceptedQuotes as $quote)
                 <tr>
                     <td>
                         <div style="font-weight: 600; color: #334155;">{{ $quote->subject ?? 'Unknown Subject' }}</div>
@@ -419,6 +419,10 @@
             </tbody>
         </table>
     </div>
+</div>
+
+<div class="pagination-wrapper mt-4">
+    {{ $quotes->appends(request()->query())->links('pagination::bootstrap-5') }}
 </div>
 
 <div class="modal-overlay" id="addQuoteModal">

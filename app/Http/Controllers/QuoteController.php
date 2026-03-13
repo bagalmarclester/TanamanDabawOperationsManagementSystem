@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Quote;
 use App\Models\Client;
+use App\Models\Quote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -16,29 +16,38 @@ class QuoteController extends Controller
         Quote::where('status', 'pending')
             ->whereDate('valid_until', '<', now())
             ->update(['status' => 'rejected']);
-        $quotes = Quote::with(['client', 'items'])->latest()->get();
+
+        $quotes = Quote::with(['client', 'items'])->latest()->paginate(10);
+        $pendingQuotes = $quotes->getCollection()->where('status', 'pending');
+        $acceptedQuotes = $quotes->getCollection()->where('status', 'accepted');
+        $quoteCounts = [
+            'all' => Quote::count(),
+            'pending' => Quote::where('status', 'pending')->count(),
+            'accepted' => Quote::where('status', 'accepted')->count(),
+        ];
         $clients = Client::all();
-        return view('quotes', compact('quotes', 'clients'));
+
+        return view('quotes', compact('quotes', 'clients', 'pendingQuotes', 'acceptedQuotes', 'quoteCounts'));
     }
 
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'client_id'   => 'required|exists:clients,id',
-            'subject'     => 'required|string|max:255', // <--- NEW: Subject Validation
-            'quote_date'  => 'required|date',
+            'client_id' => 'required|exists:clients,id',
+            'subject' => 'required|string|max:255', // <--- NEW: Subject Validation
+            'quote_date' => 'required|date',
             'valid_until' => 'required|date|after_or_equal:quote_date',
-            'items'       => 'required|array|min:1',
+            'items' => 'required|array|min:1',
             'items.*.description' => 'required|string',
-            'items.*.quantity'    => 'required|integer|min:1',
-            'items.*.price'       => 'required|numeric|min:0',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.price' => 'required|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Validation failed',
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -52,21 +61,21 @@ class QuoteController extends Controller
 
                 // Create Quote
                 $quote = Quote::create([
-                    'client_id'    => $request->client_id,
-                    'subject'      => $request->subject, // <--- NEW: Saving Subject
-                    'quote_date'   => $request->quote_date,
-                    'valid_until'  => $request->valid_until,
+                    'client_id' => $request->client_id,
+                    'subject' => $request->subject, // <--- NEW: Saving Subject
+                    'quote_date' => $request->quote_date,
+                    'valid_until' => $request->valid_until,
                     'total_amount' => $grandTotal,
-                    'status'       => 'pending',
+                    'status' => 'pending',
                 ]);
 
                 // Create Items
                 foreach ($request->items as $item) {
                     $quote->items()->create([
                         'description' => $item['description'],
-                        'quantity'    => $item['quantity'],
-                        'price'       => $item['price'],
-                        'subtotal'    => $item['quantity'] * $item['price'],
+                        'quantity' => $item['quantity'],
+                        'price' => $item['price'],
+                        'subtotal' => $item['quantity'] * $item['price'],
                     ]);
                 }
             });
@@ -77,7 +86,7 @@ class QuoteController extends Controller
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -87,14 +96,14 @@ class QuoteController extends Controller
         $quote = Quote::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'client_id'   => 'required|exists:clients,id',
-            'subject'     => 'required|string|max:255', // <--- NEW
-            'quote_date'  => 'required|date',
+            'client_id' => 'required|exists:clients,id',
+            'subject' => 'required|string|max:255', // <--- NEW
+            'quote_date' => 'required|date',
             'valid_until' => 'required|date|after_or_equal:quote_date',
-            'items'       => 'required|array|min:1',
+            'items' => 'required|array|min:1',
             'items.*.description' => 'required|string',
-            'items.*.quantity'    => 'required|integer|min:1',
-            'items.*.price'       => 'required|numeric|min:0',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.price' => 'required|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -105,13 +114,13 @@ class QuoteController extends Controller
             $changesDetected = false;
             DB::transaction(function () use ($request, $quote, &$changesDetected) {
                 // Check if basic quote details changed
-                if ($quote->client_id != $request->client_id || 
+                if ($quote->client_id != $request->client_id ||
                     $quote->subject != $request->subject ||
-                    $quote->quote_date != $request->quote_date || 
+                    $quote->quote_date != $request->quote_date ||
                     $quote->valid_until != $request->valid_until) {
                     $changesDetected = true;
                 }
-                
+
                 // Recalculate Total
                 $grandTotal = 0;
                 foreach ($request->items as $item) {
@@ -125,7 +134,7 @@ class QuoteController extends Controller
                 } else {
                     foreach ($existingItems as $index => $existingItem) {
                         $newItem = $request->items[$index] ?? null;
-                        if (!$newItem || 
+                        if (! $newItem ||
                             $existingItem->description != $newItem['description'] ||
                             $existingItem->quantity != $newItem['quantity'] ||
                             $existingItem->price != $newItem['price']) {
@@ -137,10 +146,10 @@ class QuoteController extends Controller
 
                 // Update Quote Details
                 $quote->update([
-                    'client_id'    => $request->client_id,
-                    'subject'      => $request->subject, // <--- NEW
-                    'quote_date'   => $request->quote_date,
-                    'valid_until'  => $request->valid_until,
+                    'client_id' => $request->client_id,
+                    'subject' => $request->subject, // <--- NEW
+                    'quote_date' => $request->quote_date,
+                    'valid_until' => $request->valid_until,
                     'total_amount' => $grandTotal,
                 ]);
 
@@ -150,22 +159,23 @@ class QuoteController extends Controller
                 foreach ($request->items as $item) {
                     $quote->items()->create([
                         'description' => $item['description'],
-                        'quantity'    => $item['quantity'],
-                        'price'       => $item['price'],
-                        'subtotal'    => $item['quantity'] * $item['price'],
+                        'quantity' => $item['quantity'],
+                        'price' => $item['price'],
+                        'subtotal' => $item['quantity'] * $item['price'],
                     ]);
                 }
             });
 
             $message = $changesDetected ? 'Quote updated successfully' : 'No Changes were made';
+
             return response()->json([
                 'status' => 'success',
                 'message' => $message,
-                'changesDetected' => $changesDetected
+                'changesDetected' => $changesDetected,
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -173,15 +183,17 @@ class QuoteController extends Controller
     public function destroy($id)
     {
         try {
-        $quote = Quote::find($id);
-        if ($quote) {
-            $quote->delete();
-            return response()->json(['message' => 'Quote moved to trash']);
-        }
-        return response()->json(['message' => 'Quote not found'], 404);
+            $quote = Quote::find($id);
+            if ($quote) {
+                $quote->delete();
+
+                return response()->json(['message' => 'Quote moved to trash']);
+            }
+
+            return response()->json(['message' => 'Quote not found'], 404);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: '.$e->getMessage(),
             ], 500);
         }
     }

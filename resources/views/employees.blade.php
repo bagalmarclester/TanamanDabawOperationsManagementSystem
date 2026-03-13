@@ -186,6 +186,10 @@
     </table>
 </div>
 
+<div class="pagination-wrapper mt-4">
+    {{ $employees->appends(request()->query())->links('pagination::bootstrap-5') }}
+</div>
+
 <div class="modal-overlay" id="employeeModal" style="display: none;">
     <div class="modal-box">
         <div class="modal-header">

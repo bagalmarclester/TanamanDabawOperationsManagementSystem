@@ -167,7 +167,7 @@
             </tr>
         </thead>
         <tbody id="inventoryTableBody">
-            @forelse($inventory as $item)
+            @forelse($inventoryItems as $item)
             <tr>
                 <td>
                     <div style="font-weight: 600; color: #334155;">{{ $item->item_name }}</div>
@@ -228,6 +228,10 @@
             @endforelse
         </tbody>
     </table>
+</div>
+
+<div class="pagination-wrapper mt-4">
+    {{ $inventoryItems->appends(request()->query())->links('pagination::bootstrap-5') }}
 </div>
 
 <div class="modal-overlay" id="historyModal">

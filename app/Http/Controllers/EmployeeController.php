@@ -14,7 +14,7 @@ class EmployeeController extends Controller
         // Get all users except admin
         $employees = User::where('role', '!=', 'Admin')
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10);
 
         return view('employees', compact('employees'));
     }
@@ -23,14 +23,14 @@ class EmployeeController extends Controller
     {
         $validated = $request->validate(
             [
-                'name'  => 'required|string|max:255',
+                'name' => 'required|string|max:255',
                 'email' => [
                     'required',
                     'email',
                     'regex:/^[\w\.\-]+@[a-zA-Z\d\-]+\.[a-zA-Z]{2,}$/',
                     Rule::unique('users', 'email')->whereNull('deleted_at'),
                 ],
-                'role'  => 'required|string|in:Operations Manager,Head Landscaper,Field Crew',
+                'role' => 'required|string|in:Operations Manager,Head Landscaper,Field Crew',
             ],
             [
                 'name.required' => 'Name is required',
@@ -52,10 +52,10 @@ class EmployeeController extends Controller
                 $user->restore();
 
                 $user->update([
-                    'name'     => $validated['name'],
+                    'name' => $validated['name'],
                     'username' => explode('@', $validated['email'])[0],
-                    'role'     => $validated['role'],
-                    'status'   => 'Active',
+                    'role' => $validated['role'],
+                    'status' => 'Active',
                 ]);
 
                 return response()->json([
@@ -65,18 +65,18 @@ class EmployeeController extends Controller
 
             // Create new user
             User::create([
-                'name'     => $validated['name'],
-                'email'    => $validated['email'],
+                'name' => $validated['name'],
+                'email' => $validated['email'],
                 'username' => explode('@', $validated['email'])[0],
                 'password' => Hash::make('password123'),
-                'role'     => $validated['role'],
-                'status'   => 'Active',
+                'role' => $validated['role'],
+                'status' => 'Active',
             ]);
 
             return response()->json(['message' => 'Employee added successfully!']);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -84,32 +84,32 @@ class EmployeeController extends Controller
     public function update(Request $request, string $id)
     {
         $validated = $request->validate([
-            'name'   => 'required|string|max:255',
-            'email'  => 'required|email|unique:users,email,' . $id,
-            'role'   => 'required|string|in:Operations Manager,Head Landscaper,Field Crew',
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,'.$id,
+            'role' => 'required|string|in:Operations Manager,Head Landscaper,Field Crew',
             'status' => 'required|string|in:Active,Inactive',
-            'reset_password' => 'nullable|boolean'
+            'reset_password' => 'nullable|boolean',
         ],
-        [
-            'name.required' => 'Name is required',
-            'email.required' => 'Email address is required',
-            'email.email' => 'Invalid email format',
-            'email.unique' => 'Email address already exists',
-            'role.required' => 'Role is required',
-            'status.required' => 'Status is required',
-        ]);
+            [
+                'name.required' => 'Name is required',
+                'email.required' => 'Email address is required',
+                'email.email' => 'Invalid email format',
+                'email.unique' => 'Email address already exists',
+                'role.required' => 'Role is required',
+                'status.required' => 'Status is required',
+            ]);
         try {
             $user = User::find($id);
             if (! $user) {
                 return response()->json([
-                    'message' => 'Employee not found'
+                    'message' => 'Employee not found',
                 ], 404);
             }
 
             $dataToUpdate = [
-                'name'   => $validated['name'],
-                'email'  => $validated['email'],
-                'role'   => $validated['role'],
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'role' => $validated['role'],
                 'status' => $validated['status'],
             ];
 
@@ -121,18 +121,18 @@ class EmployeeController extends Controller
 
             if (! $user->isDirty()) {
                 return response()->json([
-                    'message' => 'No changes were made'
+                    'message' => 'No changes were made',
                 ], 200);
             }
 
             $user->save();
 
             return response()->json([
-                'message' => 'Employee updated successfully'
+                'message' => 'Employee updated successfully',
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -146,9 +146,9 @@ class EmployeeController extends Controller
         try {
             $user = User::find($id);
 
-            if (!$user) {
+            if (! $user) {
                 return response()->json([
-                    'message' => 'Employee not found'
+                    'message' => 'Employee not found',
                 ], 404);
             }
 
@@ -158,11 +158,11 @@ class EmployeeController extends Controller
 
             return response()->json([
                 'message' => 'Employee deactivated successfully',
-                'status' => 'Inactive'
+                'status' => 'Inactive',
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -176,16 +176,16 @@ class EmployeeController extends Controller
 
                 return response()->json([
                     'message' => 'Employee deleted successfully',
-                    'redirect' => route('employees')
+                    'redirect' => route('employees'),
                 ], 200);
             } else {
                 return response()->json([
-                    'message' => 'Employee not found'
+                    'message' => 'Employee not found',
                 ], 404);
             }
         } catch (\Exception $e) {
             return response()->json([
-                'message' => 'An unexpected error has occurred. Please contact the developer. Error: ' . $e->getMessage()
+                'message' => 'An unexpected error has occurred. Please contact the developer. Error: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -193,7 +193,8 @@ class EmployeeController extends Controller
     public function show(string $id)
     {
         $employee = User::findOrFail($id);
+
         return view('employeespanel', compact('employee'));
-       
+
     }
 }
