@@ -276,9 +276,9 @@ class ProjectController extends Controller
                 $project = Project::with(['quote.items', 'client'])->withCount('images')->findOrFail($id);
 
                 // 2. Validation: Ensure images exist before completing
-                // if ($project->images_count === 0) {
-                //     throw new \Exception('At least one project image is required to complete the project.');
-                // }
+                if ($project->images_count === 0) {
+                throw new \Exception('At least one project image is required to complete the project.');
+               }
 
                 $project->update(['is_active' => false]);
 

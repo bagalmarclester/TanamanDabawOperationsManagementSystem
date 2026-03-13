@@ -650,7 +650,7 @@
                         fetch(`/projects/{{ $project->id }}/complete`, {
                             method: 'PATCH', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Content-Type': 'application/json' }
                         }).then(r => r.json()).then(d => {
-                            Swal.fire('Done!', d.message, 'success').then(() => window.location.reload());
+                            Swal.fire('Error!', d.message, 'error').then(() => window.location.reload());
                         });
                     }
                 });
